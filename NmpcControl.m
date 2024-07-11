@@ -26,7 +26,7 @@ classdef NmpcControl < handle
         function obj = NmpcControl(rocket, tf, expected_delay)
             
             if nargin < 3, expected_delay = 0; end
-
+            
             import casadi.*
             
             N_segs = ceil(tf/rocket.Ts); % MPC horizon
@@ -54,11 +54,12 @@ classdef NmpcControl < handle
             DeltaT = rocket.Ts;
             rocketf_discrete = @(x,u) RK4(x,u,DeltaT,rocket);
 
+            %         wx     wy  wz   a       b      g   vx vy vz   x       y     z
 
-            %         wx wy wz   a    b   g vx vy vz x  y    z
-            Q = diag([50 50 50 1 1 500 1 1 1 100 100 100]);
+            Q = diag([50 50 50  1 1 500 1 1 1 100 100 100]);
             R = diag([1 1 0.1 0.1]);
-            
+
+
             % Cost
             cost = 0;
             [xs, us] = rocket.trim();
@@ -79,9 +80,10 @@ classdef NmpcControl < handle
           
                 X_next = rocketf_discrete(X_sym(:,i), U_sym(:,i));
                 eq_constr = [eq_constr; X_sym(:,i+1)-X_next];
+                
             end     
 
-            % Terminl cost
+            % terminl cost
             sys = rocket.linearize(xs,us);
             sys = c2d(sys,DeltaT);
             [~,Qf,~] = dlqr(sys.A, sys.B, Q, R);
@@ -142,7 +144,7 @@ classdef NmpcControl < handle
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
 
-            u_init = zeros(4, 1); % Replace this by a better initialization
+            u_init = us; % Replace this by a better initialization
             
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -155,13 +157,22 @@ classdef NmpcControl < handle
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             delay = obj.expected_delay;
             mem_u = obj.mem_u;
+ 
+            Ts = obj.rocket.Ts;
+          
+            rocketf_discrete_euler = @(x,u) Euler(x,u,Ts,obj.rocket);
+            x_expected = x0;
             
+            for k = 1:1:delay
+                x_expected =  rocketf_discrete_euler(x_expected,mem_u(:,k));
+                
+            end
+            x_expected;
             % Delay compensation: Predict x0 delay timesteps later.
             % Simulate x_ for 'delay' timesteps
-            x_ = x0;
-            % ...
-       
-            x0 = x_;
+
+            x0 = x_expected;
+     
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
@@ -171,13 +182,17 @@ classdef NmpcControl < handle
             % Evaluate u0
             nlp_x = obj.sol.x;
             id = obj.idx.u0;
-            u = full( nlp_x(id(1):id(2)) );      
-            
+            u = full( nlp_x(id(1):id(2)) );
+           
+            size(obj.mem_u);
+            size(u);
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             % Delay compensation: Save current u
             if obj.expected_delay > 0
-               % obj.mem_u = ...
+                %obj.mem_u
+                obj.mem_u = [obj.mem_u(:,2:end),u];
+                %obj.mem_u
             end
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
