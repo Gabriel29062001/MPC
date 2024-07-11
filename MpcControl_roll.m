@@ -55,6 +55,23 @@ classdef MpcControl_roll < MpcControlBase
                 obj = obj + (X(:,i)-x_ref)'*Q*(X(:,i)-x_ref) + (U(:,i)-u_ref)'*R*(U(:,i)-u_ref);
             end
 
+            % Terminal value with LQR
+            sys = LTISystem('A',mpc.A,'B',mpc.B);
+            sys.x.penalty = QuadFunction(Q);
+            sys.u.penalty = QuadFunction(R);
+
+            sys.u.max = 0.20;
+            sys.u.min = -0.20;
+
+           
+            
+            Qf = sys.LQRPenalty.weight;
+            Xf = sys.LQRSet;
+
+            Ff = Xf.A;
+            ff = Xf.b;
+            con = con + (Ff*X(:,N)<= ff);
+            obj = obj + (X(:,N)-x_ref)'*Qf*(X(:,N)-x_ref);
 
 
           

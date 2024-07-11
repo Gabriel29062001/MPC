@@ -54,7 +54,7 @@ classdef MpcControl_z < MpcControlBase
 
             % Constraints on the input 
             M = [1;-1];
-            m = [23.33;6.666];
+            m = [23.33;6.66];
             
             Q = diag([1, 100]);
             R = 0.1;
