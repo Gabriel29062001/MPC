@@ -37,8 +37,8 @@ classdef MpcControl_roll < MpcControlBase
             f = [0]
 
             % Constraints on the input 
-            M = [1;-1];
-            m = [20;20];
+            M = [1;-1]
+            m = [20;20]
             
             Q = diag([1, 50]);
             R = 0.1
@@ -55,8 +55,10 @@ classdef MpcControl_roll < MpcControlBase
                 obj = obj + (X(:,i)-x_ref)'*Q*(X(:,i)-x_ref) + (U(:,i)-u_ref)'*R*(U(:,i)-u_ref);
             end
 
-    
 
+
+          
+ 
             
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

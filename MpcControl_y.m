@@ -42,7 +42,7 @@ classdef MpcControl_y < MpcControlBase
             M = [1;-1];
             m = [0.26;0.26];
             
-            Q = diag([50,1, 1, 100]);
+            Q = diag([50, 1, 1, 100]);
             R = 1;
         
             % Initialisation
@@ -59,9 +59,7 @@ classdef MpcControl_y < MpcControlBase
             end
 
 
-
-
-
+            
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             

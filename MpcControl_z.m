@@ -54,25 +54,24 @@ classdef MpcControl_z < MpcControlBase
 
             % Constraints on the input 
             M = [1;-1];
-            m = [23.33;6.66];
+            m = [23.33;6.666];
             
-            Q = diag([1, 200]);
+            Q = diag([1, 100]);
             R = 0.1;
         
             % Initialisation
             
             obj = (U(:,1)-u_ref)'*R*(U(:,1)-u_ref);
-            con = (X(:,2) == mpc.A*X(:,1) + mpc.B*U(:,1)) + (M*U(:,1) <= m);
+            con = (X(:,2) == mpc.A*X(:,1) + mpc.B*U(:,1)+ mpc.B * d_est) + (M*U(:,1) <= m);
 
             % For loop
             for i = 2:N-1
-                con = con + (X(:,i+1) == mpc.A*X(:,i) + mpc.B*U(:,i));
+                con = con + (X(:,i+1) == mpc.A*X(:,i) + mpc.B*U(:,i)+ mpc.B * d_est);
                 con = con + (M*U(:,i) <= m);
                 obj = obj + (X(:,i)-x_ref)'*Q*(X(:,i)-x_ref) + (U(:,i)-u_ref)'*R*(U(:,i)-u_ref);
             end
 
 
- 
             
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -121,8 +120,8 @@ classdef MpcControl_z < MpcControlBase
             m = [25;5];
 
             con = [M * us <= m, F * xs <= f, ...
-                   xs == mpc.A*xs + mpc.B*us, ...
-                   ref == mpc.C*xs + mpc.D];
+                   xs == mpc.A*xs + mpc.B*us + mpc.B * d_est, ...
+                   ref == mpc.C*xs + mpc.D*d_est];
             
             obj   = us^2;
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
@@ -145,11 +144,15 @@ classdef MpcControl_z < MpcControlBase
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             % You can use the matrices mpc.A, mpc.B, mpc.C and mpc.D
             
-            A_bar = [];
-            B_bar = [];
-            C_bar = [];
-            L = [];
+
+            [nx, nu] = size(mpc.B);
+            ny = size(mpc.C,1);
+            A_bar = [mpc.A, mpc.B; zeros(1,nx), 1];
+            B_bar = [mpc.B;zeros(1,nu)];
+            C_bar = [mpc.C,zeros(ny,1)];
             
+            L = -place(A_bar',C_bar',[0.1,0.2,0.3])';
+        
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
