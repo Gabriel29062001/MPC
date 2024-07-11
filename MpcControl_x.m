@@ -47,50 +47,20 @@ classdef MpcControl_x < MpcControlBase
         
             % Initialisation
             
-            obj = U(:,1)'*R*U(:,1) ;
-            con = (X(:,2) == mpc.A*X(:,1) + mpc.B*U(:,1)) + (M*U(:,1) <= m) ;
+            obj = (U(:,1)-u_ref)'*R*(U(:,1)-u_ref);
+            con = (X(:,2) == mpc.A*X(:,1) + mpc.B*U(:,1)) + (M*U(:,1) <= m);
 
             % For loop
             for i = 2:N-1
                 con = con + (X(:,i+1) == mpc.A*X(:,i) + mpc.B*U(:,i));
                 con = con + (F*X(:,i) <= f) + (M*U(:,i) <= m);
-                obj = obj + X(:,i)'*Q*X(:,i) + U(:,i)'*R*U(:,i);
+                obj = obj + (X(:,i)-x_ref)'*Q*(X(:,i)-x_ref) + (U(:,i)-u_ref)'*R*(U(:,i)-u_ref);
+                
             end
 
-            % Terminal value with LQR
-            sys = LTISystem('A',mpc.A,'B',mpc.B);
-            sys.x.penalty = QuadFunction(Q);
-            sys.u.penalty = QuadFunction(R);
-
-            sys.u.max = 0.26;
-            sys.u.min = -0.26;
-
-            sys.x.max = [inf,0.1745,inf,inf];
-            sys.x.min = [-inf,-0.1745,-inf,-inf];
             
-            Qf = sys.LQRPenalty.weight;
-            Xf = sys.LQRSet;
-
-            Ff = Xf.A;
-            ff = Xf.b;
-            con = con + (Ff*X(:,N)<= ff);
-            obj = obj + X(:,N)'*Qf*X(:,N);
 
 
-            figure
-            Xf.projection(1:2).plot('color','b');
-            xlabel("x1")
-            ylabel("x2")      
-      
-            figure
-            Xf.projection(2:3).plot('color','g');
-            xlabel("x2")
-            ylabel("x3")
-      
-            figure
-            Xf.projection(3:4).plot('color','r');
-            xlabel("x3")
-            ylabel("x4")
             
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -124,8 +94,20 @@ classdef MpcControl_x < MpcControlBase
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             % You can use the matrices mpc.A, mpc.B, mpc.C and mpc.D
             
-            obj = 0;
-            con = [xs == 0, us == 0];
+            % Constraints on the state
+            F = [0,1,0,0;0,-1,0,0];
+            f = [0.1745;0.1745];
+
+            % Constraints on the input 
+            M = [1;-1];
+            m = [0.26;0.26];
+
+            con = [M * us <= m, F * xs <= f, ...
+                   xs == mpc.A*xs + mpc.B*us, ...
+                   ref == mpc.C*xs + mpc.D];
+            
+            obj   = us^2;
+
 
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
